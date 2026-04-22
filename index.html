@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나의 운동 체크 - 월간 리포트</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+        .calendar-day { min-height: 100px; transition: transform 0.2s; }
+        .calendar-day:hover { transform: scale(1.02); }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <!-- Login Section -->
+    <div id="login-section" class="max-w-md mx-auto mt-20 bg-white p-8 rounded-2xl shadow-xl border border-gray-100">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">운동 체크 로그인</h1>
+            <p class="text-gray-500 mt-2">오늘의 운동을 기록하세요</p>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">아이디</label>
+                <input type="text" id="username" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="아이디를 입력하세요">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">비밀번호</label>
+                <input type="password" id="password" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="비밀번호를 입력하세요">
+            </div>
+            <div id="login-error" class="text-red-500 text-sm hidden">아이디 또는 비밀번호가 올바르지 않습니다.</div>
+            <button onclick="handleLogin()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">로그인</button>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Section -->
+    <div id="dashboard-section" class="hidden max-w-6xl mx-auto">
+        <header class="flex justify-between items-center mb-8">
+            <div>
+                <h1 id="month-title" class="text-3xl font-bold text-gray-800">2024년 4월</h1>
+                <p class="text-gray-600">꾸준한 운동이 건강을 만듭니다.</p>
+            </div>
+            <button onclick="handleLogout()" class="text-gray-500 hover:text-red-500 font-medium">로그아웃</button>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- Left Panel: Summary & Input -->
+            <div class="lg:col-span-1 space-y-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h2 class="text-lg font-bold mb-4 flex items-center">
+                        <span class="mr-2">🔥</span> 오늘의 체크리스트
+                    </h2>
+                    <div id="workout-form" class="space-y-4">
+                        <label class="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100">
+                            <input type="checkbox" id="pushup" class="w-5 h-5 text-blue-600 rounded">
+                            <span class="text-gray-700">팔 굽혀 펴기 50회</span>
+                        </label>
+                        <label class="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100">
+                            <input type="checkbox" id="stairs" class="w-5 h-5 text-blue-600 rounded">
+                            <span class="text-gray-700">계단 오르기</span>
+                        </label>
+                        <label class="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100">
+                            <input type="checkbox" id="running" class="w-5 h-5 text-blue-600 rounded">
+                            <span class="text-gray-700">러닝 5km</span>
+                        </label>
+                        <label class="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100">
+                            <input type="checkbox" id="squat" class="w-5 h-5 text-blue-600 rounded">
+                            <span class="text-gray-700">스쿼트 50회</span>
+                        </label>
+                        <button onclick="saveTodayWorkout()" class="w-full bg-slate-800 text-white py-2 rounded-lg font-medium hover:bg-slate-900 transition">기록 저장</button>
+                    </div>
+                </div>
+
+                <div class="bg-blue-600 p-6 rounded-xl shadow-sm text-white">
+                    <h3 class="text-sm opacity-80 uppercase tracking-wider mb-1">이번 달 달성률</h3>
+                    <div class="text-3xl font-bold mb-2" id="monthly-stats">0%</div>
+                    <div class="w-full bg-blue-400 rounded-full h-2">
+                        <div id="stats-progress" class="bg-white h-2 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Calendar -->
+            <div class="lg:col-span-3 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div class="calendar-grid mb-2">
+                    <div class="text-center font-bold text-red-500 py-2">일</div>
+                    <div class="text-center font-bold text-gray-500 py-2">월</div>
+                    <div class="text-center font-bold text-gray-500 py-2">화</div>
+                    <div class="text-center font-bold text-gray-500 py-2">수</div>
+                    <div class="text-center font-bold text-gray-500 py-2">목</div>
+                    <div class="text-center font-bold text-gray-500 py-2">금</div>
+                    <div class="text-center font-bold text-gray-600 py-2">토</div>
+                </div>
+                <div id="calendar-days" class="calendar-grid">
+                    <!-- Days will be generated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback Modal (Custom Alert Alternative) -->
+    <div id="message-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-xl max-w-xs w-full text-center">
+            <div id="modal-icon" class="text-4xl mb-4">✅</div>
+            <p id="modal-text" class="text-gray-800 font-medium mb-6">성공적으로 저장되었습니다!</p>
+            <button onclick="closeModal()" class="w-full py-2 bg-blue-600 text-white rounded-lg">확인</button>
+        </div>
+    </div>
+
+    <script>
+        // State Management
+        let workoutData = JSON.parse(localStorage.getItem('workout_records')) || {};
+        const today = new Date();
+        const currentYear = today.getFullYear();
+        const currentMonth = today.getMonth();
+
+        // Login Logic
+        function handleLogin() {
+            const id = document.getElementById('username').value;
+            const pw = document.getElementById('password').value;
+            const errorMsg = document.getElementById('login-error');
+
+            if (id === 'user' && pw === 'userpass') {
+                document.getElementById('login-section').classList.add('hidden');
+                document.getElementById('dashboard-section').classList.remove('hidden');
+                initDashboard();
+            } else {
+                errorMsg.classList.remove('hidden');
+            }
+        }
+
+        function handleLogout() {
+            document.getElementById('login-section').classList.remove('hidden');
+            document.getElementById('dashboard-section').classList.add('hidden');
+        }
+
+        // Dashboard Logic
+        function initDashboard() {
+            document.getElementById('month-title').innerText = `${currentYear}년 ${currentMonth + 1}월`;
+            renderCalendar();
+            updateStats();
+            loadTodayState();
+        }
+
+        function renderCalendar() {
+            const container = document.getElementById('calendar-days');
+            container.innerHTML = '';
+            
+            const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+            // Padding for first week
+            for (let i = 0; i < firstDay; i++) {
+                const pad = document.createElement('div');
+                pad.className = 'bg-gray-50 border border-gray-50 rounded-lg calendar-day opacity-50';
+                container.appendChild(pad);
+            }
+
+            // Real days
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateKey = `${currentYear}-${currentMonth + 1}-${d}`;
+                const record = workoutData[dateKey] || { p: false, s: false, r: false, sq: false };
+                const isToday = d === today.getDate();
+
+                const dayEl = document.createElement('div');
+                dayEl.className = `p-2 border rounded-lg calendar-day flex flex-col ${isToday ? 'border-blue-500 bg-blue-50' : 'border-gray-100 bg-white'}`;
+                
+                let iconsHtml = '';
+                if (record.p) iconsHtml += '<span class="text-xs bg-red-100 text-red-600 px-1 rounded">팔</span>';
+                if (record.s) iconsHtml += '<span class="text-xs bg-green-100 text-green-600 px-1 rounded">계</span>';
+                if (record.r) iconsHtml += '<span class="text-xs bg-blue-100 text-blue-600 px-1 rounded">러</span>';
+                if (record.sq) iconsHtml += '<span class="text-xs bg-purple-100 text-purple-600 px-1 rounded">스</span>';
+
+                dayEl.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="font-bold text-gray-700">${d}</span>
+                        ${isToday ? '<span class="text-[10px] bg-blue-600 text-white px-1.5 py-0.5 rounded-full">Today</span>' : ''}
+                    </div>
+                    <div class="flex flex-wrap gap-1">
+                        ${iconsHtml}
+                    </div>
+                `;
+                container.appendChild(dayEl);
+            }
+        }
+
+        function loadTodayState() {
+            const dateKey = `${currentYear}-${currentMonth + 1}-${today.getDate()}`;
+            const record = workoutData[dateKey];
+            if (record) {
+                document.getElementById('pushup').checked = record.p;
+                document.getElementById('stairs').checked = record.s;
+                document.getElementById('running').checked = record.r;
+                document.getElementById('squat').checked = record.sq;
+            }
+        }
+
+        function saveTodayWorkout() {
+            const dateKey = `${currentYear}-${currentMonth + 1}-${today.getDate()}`;
+            workoutData[dateKey] = {
+                p: document.getElementById('pushup').checked,
+                s: document.getElementById('stairs').checked,
+                r: document.getElementById('running').checked,
+                sq: document.getElementById('squat').checked
+            };
+            
+            localStorage.setItem('workout_records', JSON.stringify(workoutData));
+            renderCalendar();
+            updateStats();
+            showMessage('기록이 안전하게 저장되었습니다!');
+        }
+
+        function updateStats() {
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            let completedCount = 0;
+            let totalPossible = daysInMonth * 4;
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateKey = `${currentYear}-${currentMonth + 1}-${d}`;
+                const rec = workoutData[dateKey];
+                if (rec) {
+                    if (rec.p) completedCount++;
+                    if (rec.s) completedCount++;
+                    if (rec.r) completedCount++;
+                    if (rec.sq) completedCount++;
+                }
+            }
+
+            const percentage = Math.round((completedCount / totalPossible) * 100);
+            document.getElementById('monthly-stats').innerText = `${percentage}%`;
+            document.getElementById('stats-progress').style.width = `${percentage}%`;
+        }
+
+        // Modal Logic
+        function showMessage(text) {
+            document.getElementById('modal-text').innerText = text;
+            document.getElementById('message-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('message-modal').classList.add('hidden');
+        }
+
+        // Allow Enter key for login
+        document.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                if (!document.getElementById('login-section').classList.contains('hidden')) {
+                    handleLogin();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
